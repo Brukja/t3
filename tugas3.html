@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tugas 3 – SITTA Universitas Terbuka</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<nav class="navbar">
+  <div class="navbar-brand">
+    <div class="navbar-logo">UT</div>
+    <span>SITTA</span>
+    <span style="opacity:.6;font-weight:400;">Universitas Terbuka</span>
+  </div>
+  <ul class="navbar-nav">
+    <li><a href="dashboard.html">🏠 Dashboard</a></li>
+    <li><a href="stok.html">📚 Bahan Ajar</a></li>
+    <li><a href="tracking.html">🚚 Tracking</a></li>
+    <li><a href="tugas3.html" class="active">🆕 Tugas 3</a></li>
+    <li class="dropdown">
+      <button>📊 Laporan ▾</button>
+      <div class="dropdown-menu">
+        <a href="dashboard.html#laporan-do">📋 Monitoring Progress DO</a>
+        <a href="dashboard.html#laporan-rekap">📦 Rekap Bahan Ajar</a>
+      </div>
+    </li>
+    <li><a href="dashboard.html#histori">🕒 Histori Transaksi</a></li>
+  </ul>
+  <div class="navbar-user" onclick="window.location.href='dashboard.html'">
+    <div class="avatar">?</div>
+    <div>
+      <div style="font-size:13px;font-weight:600;">Tugas 3</div>
+      <div style="font-size:11px;opacity:.8;">Tampilan tetap</div>
+    </div>
+  </div>
+</nav>
+
+<div id="tugas3-app" class="main-content" v-cloak>
+  <div class="greeting-section">
+    <div class="greeting-text">
+      <h2>Tugas 3 SITTA UT</h2>
+      <p>Analisis data bahan ajar, paket, dan DO dengan tampilan yang sama dari tugas 2.</p>
+    </div>
+    <div class="greeting-time">{{ currentTime }}</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 Ringkasan Data</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
+      <div class="card" style="padding:18px;text-align:center;">
+        <div style="font-size:28px;font-weight:800;color:var(--primary);">{{ totalUpbjj }}</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:4px;">UPBJJ</div>
+      </div>
+      <div class="card" style="padding:18px;text-align:center;">
+        <div style="font-size:28px;font-weight:800;color:var(--success);">{{ totalKategori }}</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:4px;">Kategori MK</div>
+      </div>
+      <div class="card" style="padding:18px;text-align:center;">
+        <div style="font-size:28px;font-weight:800;color:var(--warning);">{{ totalEkspedisi }}</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:4px;">Metode Pengiriman</div>
+      </div>
+      <div class="card" style="padding:18px;text-align:center;">
+        <div style="font-size:28px;font-weight:800;color:var(--secondary);">{{ totalPaket }}</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:4px;">Paket Tersedia</div>
+      </div>
+      <div class="card" style="padding:18px;text-align:center;">
+        <div style="font-size:28px;font-weight:800;color:var(--danger);">{{ totalStokItems }}</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:4px;">Item Stok</div>
+      </div>
+      <div class="card" style="padding:18px;text-align:center;">
+        <div style="font-size:28px;font-weight:800;color:var(--dark);">{{ totalStokQty }}</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:4px;">Total Qty</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔍 Filter dan Cari Stok</div>
+    <div class="filter-bar" style="align-items:flex-end;flex-wrap:wrap;">
+      <div class="form-group" style="flex:1;min-width:220px;">
+        <label>UT Daerah</label>
+        <div class="custom-select" :class="{ open: dd.upbjj }">
+          <div class="custom-select-trigger" @click="toggleDD('upbjj')">
+            <span :class="{ placeholder: !filterUpbjj }">{{ filterUpbjj || 'Semua UT Daerah' }}</span>
+            <span class="custom-select-arrow">▾</span>
+          </div>
+          <div class="custom-select-options" v-show="dd.upbjj">
+            <div class="custom-select-option" :class="{ selected: filterUpbjj === '' }" @click="pilihDD('upbjj','')">Semua UT Daerah</div>
+            <div class="custom-select-option" v-for="u in upbjjList" :key="u" :class="{ selected: filterUpbjj === u }" @click="pilihDD('upbjj',u)">{{ u }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group" style="flex:1;min-width:220px;">
+        <label>Kategori</label>
+        <div class="custom-select" :class="{ open: dd.kategori }">
+          <div class="custom-select-trigger" @click="toggleDD('kategori')">
+            <span :class="{ placeholder: !filterKategori }">{{ filterKategori || 'Semua Kategori' }}</span>
+            <span class="custom-select-arrow">▾</span>
+          </div>
+          <div class="custom-select-options" v-show="dd.kategori">
+            <div class="custom-select-option" :class="{ selected: filterKategori === '' }" @click="pilihDD('kategori','')">Semua Kategori</div>
+            <div class="custom-select-option" v-for="k in kategoriList" :key="k" :class="{ selected: filterKategori === k }" @click="pilihDD('kategori',k)">{{ k }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group" style="flex:2;min-width:240px;">
+        <label>Cari Judul</label>
+        <input type="text" class="form-control" v-model="searchJudul" placeholder="Cari judul bahan ajar..."/>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-end;">
+        <button class="btn btn-outline btn-sm" @click="resetFilter">↺ Reset</button>
+      </div>
+    </div>
+    <div class="alert alert-info" style="display:flex;">
+      Menampilkan <strong style="margin:0 4px;">{{ filteredStok.length }}</strong> dari <strong style="margin:0 4px;">{{ totalStokItems }}</strong> bahan ajar.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📚 Tabel Stok Bahan Ajar</div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Kode</th><th>Judul</th><th>Kategori</th><th>UT Daerah</th><th>Qty</th><th>Status</th><th>Harga</th></tr>
+        </thead>
+        <tbody>
+          <tr v-for="(item,index) in filteredStok" :key="item.kode">
+            <td>{{ index + 1 }}</td>
+            <td><code>{{ item.kode }}</code></td>
+            <td>{{ item.judul }}</td>
+            <td><span class="badge badge-info">{{ item.kategori }}</span></td>
+            <td>{{ item.upbjj }}</td>
+            <td>{{ item.qty }}</td>
+            <td><span :style="statusStyle(item)">{{ statusLabel(item) }}</span></td>
+            <td>{{ formatRupiah(item.harga) }}</td>
+          </tr>
+          <tr v-if="filteredStok.length === 0"><td colspan="8" style="text-align:center;color:var(--gray);padding:20px;">Tidak ada data sesuai filter.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📦 Tabel Paket</div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Kode Paket</th><th>Nama Paket</th><th>Isi</th><th>Harga</th></tr>
+        </thead>
+        <tbody>
+          <tr v-for="pak in paket" :key="pak.kode">
+            <td><strong>{{ pak.kode }}</strong></td>
+            <td>{{ pak.nama }}</td>
+            <td>{{ pak.isi.join(', ') }}</td>
+            <td>{{ formatRupiah(pak.harga) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🚚 Tracking DO</div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Nomor DO</th><th>Nama</th><th>Ekspedisi</th><th>Tgl Kirim</th><th>Status</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in trackingList" :key="item.no">
+            <td><strong>{{ item.no }}</strong></td>
+            <td>{{ item.nama }}</td>
+            <td>{{ item.ekspedisi }}</td>
+            <td>{{ item.tanggalKirim }}</td>
+            <td><span class="badge badge-warning">{{ item.status }}</span></td>
+            <td>{{ formatRupiah(item.total) }}</td>
+          </tr>
+          <tr v-if="trackingList.length === 0"><td colspan="6" style="text-align:center;color:var(--gray);padding:20px;">Tidak ada data tracking.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="js/dataBahanAjar.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script src="js/tugas3-app.js"></script>
+</body>
+</html>

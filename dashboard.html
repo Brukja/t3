@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard – SITTA Universitas Terbuka</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<nav class="navbar">
+  <div class="navbar-brand">
+    <div class="navbar-logo">UT</div>
+    <span>SITTA</span>
+    <span style="opacity:.6;font-weight:400;">Universitas Terbuka</span>
+  </div>
+  <ul class="navbar-nav">
+    <li><a href="dashboard.html" class="active">🏠 Dashboard</a></li>
+    <li><a href="stok.html">📚 Bahan Ajar</a></li>
+    <li><a href="tracking.html">🚚 Tracking</a></li>
+    <li><a href="tugas3.html">🆕 Tugas 3</a></li>
+    <li class="dropdown">
+      <button>📊 Laporan ▾</button>
+      <div class="dropdown-menu">
+        <a href="#laporan-do">📋 Monitoring Progress DO</a>
+        <a href="#laporan-rekap">📦 Rekap Bahan Ajar</a>
+      </div>
+    </li>
+    <li><a href="#histori">🕒 Histori Transaksi</a></li>
+  </ul>
+  <div class="navbar-user" onclick="logout()">
+    <div class="avatar" id="avatarNav">?</div>
+    <div>
+      <div style="font-size:13px;font-weight:600;" id="namaUserNav">–</div>
+      <div style="font-size:11px;opacity:.8;" id="roleUserNav">–</div>
+    </div>
+    <span style="font-size:12px;opacity:.7;">⎋ Keluar</span>
+  </div>
+</nav>
+
+<div class="main-content">
+  <div class="greeting-section">
+    <div class="greeting-text">
+      <h2 id="greetingText">Selamat Datang!</h2>
+      <p>📅 <span id="tanggalHariIni"></span> &nbsp;|&nbsp; Dashboard Aplikasi SITTA UT</p>
+    </div>
+    <div class="greeting-time" id="jamSekarang">00:00:00</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🧭 Menu Utama</div>
+    <div class="menu-grid">
+      <a href="stok.html" class="menu-card">
+        <div class="menu-icon">📚</div>
+        <h3>Informasi Bahan Ajar</h3>
+        <p>Lihat & kelola stok bahan ajar</p>
+      </a>
+      <a href="tracking.html" class="menu-card">
+        <div class="menu-icon">🚚</div>
+        <h3>Tracking Pengiriman</h3>
+        <p>Pantau perjalanan paket DO</p>
+      </a>
+      <a href="#laporan-do" class="menu-card" onclick="document.getElementById('laporan-do').scrollIntoView({behavior:'smooth'});return false;">
+        <div class="menu-icon">📋</div>
+        <h3>Monitoring Progress DO</h3>
+        <p>Status delivery order aktif</p>
+      </a>
+      <a href="#laporan-rekap" class="menu-card" onclick="document.getElementById('laporan-rekap').scrollIntoView({behavior:'smooth'});return false;">
+        <div class="menu-icon">📦</div>
+        <h3>Rekap Bahan Ajar</h3>
+        <p>Rangkuman data stok</p>
+      </a>
+      <a href="#histori" class="menu-card" onclick="document.getElementById('histori').scrollIntoView({behavior:'smooth'});return false;">
+        <div class="menu-icon">🕒</div>
+        <h3>Histori Transaksi</h3>
+        <p>Riwayat pengiriman bahan ajar</p>
+      </a>
+    </div>
+  </div>
+
+  <!-- Statistik — diisi JS dari localStorage -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
+    <div class="card" style="text-align:center;padding:20px;">
+      <div style="font-size:32px;font-weight:800;color:var(--primary);" id="statTotalItem">–</div>
+      <div style="font-size:13px;color:var(--gray);margin-top:4px;">Total Bahan Ajar</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px;">
+      <div style="font-size:32px;font-weight:800;color:var(--success);" id="statTotalDO">–</div>
+      <div style="font-size:13px;color:var(--gray);margin-top:4px;">Total DO</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px;">
+      <div style="font-size:32px;font-weight:800;color:var(--warning);" id="statDOAktif">–</div>
+      <div style="font-size:13px;color:var(--gray);margin-top:4px;">DO Belum Selesai</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px;">
+      <div style="font-size:32px;font-weight:800;color:var(--secondary);" id="statTotalStok">–</div>
+      <div style="font-size:13px;color:var(--gray);margin-top:4px;">Total Stok</div>
+    </div>
+  </div>
+
+  <div class="card" id="laporan-do">
+    <div class="card-title">📋 Monitoring Progress Delivery Order</div>
+    <div class="table-wrapper">
+      <table id="tabelDO">
+        <thead><tr><th>No. DO</th><th>Nama Penerima</th><th>Ekspedisi</th><th>Tgl Kirim</th><th>Paket</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead>
+        <tbody id="bodyDO"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" id="laporan-rekap">
+    <div class="card-title">📦 Rekap Bahan Ajar</div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Kode</th><th>Judul</th><th>Kategori</th><th>UT Daerah</th><th>Lokasi Rak</th><th>Harga</th><th>Stok</th><th>Status</th></tr></thead>
+        <tbody id="bodyRekap"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" id="histori">
+    <div class="card-title">🕒 Histori Transaksi Bahan Ajar</div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>#</th><th>Nomor DO</th><th>Nama</th><th>Ekspedisi</th><th>Paket</th><th>Total</th><th>Status</th></tr></thead>
+        <tbody id="bodyHistori"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/script.js"></script>
+<script>
+  document.getElementById("tanggalHariIni").textContent =
+    new Date().toLocaleDateString("id-ID",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+
+  // Baca data TERBARU dari localStorage setiap kali dashboard dibuka
+  var stokData    = SITTA.getStok();
+  var trackingData = SITTA.getTracking();
+
+  // Helper badge status 5 tahap
+  function badgeStatus(status) {
+    if (status === 'Selesai')         return '<span class="badge badge-success">✅ ' + status + '</span>';
+    if (status === 'Proses Antar')    return '<span class="badge badge-warning">🚚 ' + status + '</span>';
+    if (status === 'Di Hub')          return '<span class="badge badge-warning">🏭 ' + status + '</span>';
+    if (status === 'Diterima Kurir')  return '<span class="badge badge-info">🧑‍💼 ' + status + '</span>';
+    return '<span class="badge badge-gray">📋 ' + status + '</span>';
+  }
+
+  function formatRupiah(n) { return 'Rp ' + Number(n).toLocaleString('id-ID'); }
+
+  // Statistik ringkasan
+  function isiStatistik() {
+    var totalStok = stokData.reduce(function(s, b) { return s + b.qty; }, 0);
+    var keys = Object.keys(trackingData);
+    var doAktif = keys.filter(function(k) { return trackingData[k].status !== 'Selesai'; }).length;
+    document.getElementById('statTotalItem').textContent = stokData.length;
+    document.getElementById('statTotalDO').textContent   = keys.length;
+    document.getElementById('statDOAktif').textContent   = doAktif;
+    document.getElementById('statTotalStok').textContent = totalStok.toLocaleString('id-ID');
+  }
+
+  // Tabel monitoring DO
+  function isiTabelDO() {
+    var tbody = document.getElementById("bodyDO");
+    tbody.innerHTML = "";
+    var keys = Object.keys(trackingData);
+    if (keys.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gray);padding:20px;">Belum ada Delivery Order.</td></tr>';
+      return;
+    }
+    keys.forEach(function(no) {
+      var d = trackingData[no];
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><strong>' + no + '</strong></td>' +
+        '<td>' + d.nama + '</td>' +
+        '<td>' + d.ekspedisi + '</td>' +
+        '<td>' + d.tanggalKirim + '</td>' +
+        '<td>' + d.paket + '</td>' +
+        '<td>' + formatRupiah(d.total) + '</td>' +
+        '<td>' + badgeStatus(d.status) + '</td>' +
+        '<td><a href="tracking.html" class="btn btn-sm btn-outline">🔍 Lacak</a></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Tabel rekap bahan ajar
+  function isiRekap() {
+    var tbody = document.getElementById("bodyRekap");
+    tbody.innerHTML = "";
+    if (stokData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gray);padding:20px;">Belum ada data bahan ajar.</td></tr>';
+      return;
+    }
+    stokData.forEach(function(b) {
+      var warna = b.qty === 0 ? 'var(--danger)' : b.qty < b.safety ? 'var(--warning)' : 'var(--success)';
+      var statusLabel = b.qty === 0 ? '🔴 Kosong' : b.qty < b.safety ? '🟡 Menipis' : '🟢 Aman';
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><code>' + b.kode + '</code></td>' +
+        '<td>' + b.judul + '</td>' +
+        '<td><span class="badge badge-info">' + b.kategori + '</span></td>' +
+        '<td>' + b.upbjj + '</td>' +
+        '<td>' + b.lokasiRak + '</td>' +
+        '<td>' + formatRupiah(b.harga) + '</td>' +
+        '<td><span style="color:' + warna + ';font-weight:700;">' + b.qty + '</span></td>' +
+        '<td><span style="color:' + warna + ';font-weight:600;">' + statusLabel + '</span></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Tabel histori transaksi
+  function isiHistori() {
+    var tbody = document.getElementById("bodyHistori");
+    tbody.innerHTML = "";
+    var keys = Object.keys(trackingData);
+    if (keys.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray);padding:20px;">Belum ada histori transaksi.</td></tr>';
+      return;
+    }
+    keys.forEach(function(no, idx) {
+      var d = trackingData[no];
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td>' + (idx + 1) + '</td>' +
+        '<td><strong>' + no + '</strong></td>' +
+        '<td>' + d.nama + '</td>' +
+        '<td>' + d.ekspedisi + '</td>' +
+        '<td>' + d.paket + '</td>' +
+        '<td>' + formatRupiah(d.total) + '</td>' +
+        '<td>' + badgeStatus(d.status) + '</td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  isiStatistik();
+  isiTabelDO();
+  isiRekap();
+  isiHistori();
+</script>
+</body>
+</html>

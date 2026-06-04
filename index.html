@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login – SITTA Universitas Terbuka</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .pw-toggle { position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; color:var(--gray); font-size:18px; user-select:none; -webkit-user-select:none; }
+  </style>
+</head>
+<body>
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-circle"><span>UT</span></div>
+      <h1>SITTA</h1>
+      <p>Sistem Informasi Tiras dan Transaksi Bahan Ajar</p>
+    </div>
+    <div class="alert alert-danger hidden" id="alertLogin">⚠️ Email atau password salah.</div>
+    <div class="form-group">
+      <label>Email</label>
+      <div class="input-icon">
+        <span class="icon">✉️</span>
+        <input type="email" id="inputEmail" class="form-control" placeholder="Masukkan email Anda"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <div class="input-icon" style="position:relative;">
+        <span class="icon">🔒</span>
+        <input type="password" id="inputPassword" class="form-control" placeholder="Masukkan password Anda"/>
+        <span class="pw-toggle" onclick="togglePassword()" id="toggleIcon">👁️</span>
+      </div>
+    </div>
+    <div class="forgot-link"><a onclick="bukaModalLupaPassword()">Lupa Password?</a></div>
+    <button class="btn btn-primary btn-block" onclick="prosesLogin()">🔑 Masuk</button>
+    <div class="login-link" style="margin-top:20px;">
+      Belum punya akun? <a onclick="bukaModalDaftar()">Daftar di sini</a>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LUPA PASSWORD -->
+<div class="modal-overlay" id="modalLupaPassword">
+  <div class="modal-box">
+    <button class="modal-close" onclick="tutupModal('modalLupaPassword')">✕</button>
+    <h2 class="modal-title">🔑 Lupa Password</h2>
+    <p style="font-size:14px;color:#555;margin-bottom:20px;">Masukkan email terdaftar. Admin SITTA akan menghubungi Anda.</p>
+    <div class="form-group">
+      <label>Email Terdaftar</label>
+      <div class="input-icon">
+        <span class="icon">✉️</span>
+        <input type="email" id="emailLupa" class="form-control" placeholder="contoh@ut.ac.id"/>
+      </div>
+    </div>
+    <div class="alert alert-success hidden" id="alertLupaOK">✅ Permintaan terkirim!</div>
+    <button class="btn btn-primary btn-block" onclick="kirimLupaPassword()">📩 Kirim Permintaan</button>
+  </div>
+</div>
+
+<!-- MODAL DAFTAR -->
+<div class="modal-overlay" id="modalDaftar">
+  <div class="modal-box">
+    <button class="modal-close" onclick="tutupModal('modalDaftar')">✕</button>
+    <h2 class="modal-title">📝 Daftar Akun Baru</h2>
+    <div class="alert alert-info" style="display:flex;">ℹ️ Pendaftaran melalui administrator pusat UT.</div>
+    <div class="form-group"><label>Nama Lengkap</label><input type="text" id="regNama" class="form-control" placeholder="Nama lengkap"/></div>
+    <div class="form-group"><label>Email Instansi</label><input type="email" id="regEmail" class="form-control" placeholder="nama@ut.ac.id"/></div>
+    <div class="form-group"><label>Unit / UPBJJ</label><input type="text" id="regUnit" class="form-control" placeholder="Contoh: UPBJJ Jakarta"/></div>
+    <div class="alert alert-success hidden" id="alertDaftarOK">✅ Permintaan pendaftaran terkirim!</div>
+    <button class="btn btn-secondary btn-block" onclick="kirimDaftar()">📤 Kirim Permintaan</button>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script>
+  if (sessionStorage.getItem("loginUser")) window.location.href = "dashboard.html";
+
+  function prosesLogin() {
+    var email = document.getElementById("inputEmail").value.trim();
+    var password = document.getElementById("inputPassword").value;
+    var alertEl = document.getElementById("alertLogin");
+    if (!email || !password) {
+      alertEl.textContent = "⚠️ Email dan password tidak boleh kosong!";
+      alertEl.classList.remove("hidden"); return;
+    }
+    var user = dataPengguna.find(function(u){ return u.email===email && u.password===password; });
+    if (user) {
+      sessionStorage.setItem("loginUser", user.email);
+      sessionStorage.setItem("namaUser", user.nama);
+      sessionStorage.setItem("roleUser", user.role);
+      alertEl.classList.add("hidden");
+      window.location.href = "dashboard.html";
+    } else {
+      alertEl.textContent = "⚠️ Email atau password yang Anda masukkan salah.";
+      alertEl.classList.remove("hidden");
+    }
+  }
+
+  function togglePassword() {
+    var input = document.getElementById("inputPassword");
+    var icon = document.getElementById("toggleIcon");
+    input.type = input.type === "password" ? "text" : "password";
+    icon.textContent = input.type === "password" ? "👁️" : "🙈";
+  }
+
+  document.addEventListener("keydown", function(e){ if(e.key==="Enter") prosesLogin(); });
+
+  function bukaModalLupaPassword(){ document.getElementById("modalLupaPassword").classList.add("active"); }
+  function bukaModalDaftar(){ document.getElementById("modalDaftar").classList.add("active"); }
+  function tutupModal(id){ document.getElementById(id).classList.remove("active"); }
+
+  function kirimLupaPassword(){
+    var email = document.getElementById("emailLupa").value.trim();
+    if(!email){ alert("Masukkan email!"); return; }
+    document.getElementById("alertLupaOK").classList.remove("hidden");
+    setTimeout(function(){ tutupModal("modalLupaPassword"); document.getElementById("alertLupaOK").classList.add("hidden"); }, 2500);
+  }
+
+  function kirimDaftar(){
+    var nama=document.getElementById("regNama").value.trim();
+    var email=document.getElementById("regEmail").value.trim();
+    var unit=document.getElementById("regUnit").value.trim();
+    if(!nama||!email||!unit){ alert("Harap isi semua field!"); return; }
+    document.getElementById("alertDaftarOK").classList.remove("hidden");
+    setTimeout(function(){ tutupModal("modalDaftar"); document.getElementById("alertDaftarOK").classList.add("hidden"); }, 2500);
+  }
+
+  document.querySelectorAll(".modal-overlay").forEach(function(o){
+    o.addEventListener("click", function(e){ if(e.target===o) o.classList.remove("active"); });
+  });
+</script>
+</body>
+</html>

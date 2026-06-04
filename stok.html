@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stok Bahan Ajar – SITTA UT</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<nav class="navbar">
+  <div class="navbar-brand">
+    <div class="navbar-logo">UT</div>
+    <span>SITTA</span>
+    <span style="opacity:.6;font-weight:400;">Universitas Terbuka</span>
+  </div>
+  <ul class="navbar-nav">
+    <li><a href="dashboard.html">🏠 Dashboard</a></li>
+    <li><a href="stok.html" class="active">📚 Bahan Ajar</a></li>
+    <li><a href="tracking.html">🚚 Tracking</a></li>
+    <li><a href="tugas3.html">🆕 Tugas 3</a></li>
+    <li class="dropdown">
+      <button>📊 Laporan ▾</button>
+      <div class="dropdown-menu">
+        <a href="dashboard.html#laporan-do">📋 Monitoring Progress DO</a>
+        <a href="dashboard.html#laporan-rekap">📦 Rekap Bahan Ajar</a>
+      </div>
+    </li>
+    <li><a href="dashboard.html#histori">🕒 Histori Transaksi</a></li>
+  </ul>
+  <div class="navbar-user" onclick="logout()">
+    <div class="avatar" id="avatarNav">?</div>
+    <div>
+      <div style="font-size:13px;font-weight:600;" id="namaUserNav">–</div>
+      <div style="font-size:11px;opacity:.8;" id="roleUserNav">–</div>
+    </div>
+    <span style="font-size:12px;opacity:.7;">⎋ Keluar</span>
+  </div>
+</nav>
+
+<div id="stok-app" v-cloak>
+<div class="main-content">
+
+  <!-- Ringkasan -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px;">
+    <div class="card" style="padding:18px;text-align:center;">
+      <div style="font-size:28px;font-weight:800;color:var(--primary);">{{ stok.length }}</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:4px;">Total Item</div>
+    </div>
+    <div class="card" style="padding:18px;text-align:center;">
+      <div style="font-size:28px;font-weight:800;color:var(--success);">{{ totalStok }}</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:4px;">Total Stok</div>
+    </div>
+    <div class="card" style="padding:18px;text-align:center;">
+      <div style="font-size:28px;font-weight:800;color:var(--warning);">{{ jumlahMenipis }}</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:4px;">Stok Menipis</div>
+    </div>
+    <div class="card" style="padding:18px;text-align:center;">
+      <div style="font-size:28px;font-weight:800;color:var(--danger);">{{ jumlahKosong }}</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:4px;">Stok Kosong</div>
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div class="card">
+    <div class="card-title">🔍 Filter, Sort & Reorder</div>
+    <div class="filter-bar">
+
+      <!-- Custom Dropdown: UT Daerah -->
+      <div class="form-group">
+        <label>UT Daerah</label>
+        <div class="custom-select" :class="{ open: dd.upbjj }">
+          <div class="custom-select-trigger" @click="toggleDD('upbjj')">
+            <span :class="{ placeholder: !filterUpbjj }">{{ filterUpbjj || 'Semua UT Daerah' }}</span>
+            <span class="custom-select-arrow">▾</span>
+          </div>
+          <div class="custom-select-options" v-show="dd.upbjj">
+            <div class="custom-select-option" :class="{ selected: filterUpbjj === '' }" @click="pilihDD('upbjj', '')">Semua UT Daerah</div>
+            <div class="custom-select-option" v-for="u in upbjjList" :key="u"
+                 :class="{ selected: filterUpbjj === u }" @click="pilihDD('upbjj', u)">{{ u }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Dropdown: Kategori MK (dependent) -->
+      <div class="form-group" v-if="tampilFilterKategori">
+        <label>Kategori MK</label>
+        <div class="custom-select" :class="{ open: dd.kategori }">
+          <div class="custom-select-trigger" @click="toggleDD('kategori')">
+            <span :class="{ placeholder: !filterKategori }">{{ filterKategori || 'Semua Kategori' }}</span>
+            <span class="custom-select-arrow">▾</span>
+          </div>
+          <div class="custom-select-options" v-show="dd.kategori">
+            <div class="custom-select-option" :class="{ selected: filterKategori === '' }" @click="pilihDD('kategori', '')">Semua Kategori</div>
+            <div class="custom-select-option" v-for="k in kategoriTersedia" :key="k"
+                 :class="{ selected: filterKategori === k }" @click="pilihDD('kategori', k)">{{ k }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Dropdown: Urutkan -->
+      <div class="form-group">
+        <label>Urutkan</label>
+        <div class="custom-select" :class="{ open: dd.sort }">
+          <div class="custom-select-trigger" @click="toggleDD('sort')">
+            <span>{{ sortByLabel }}</span>
+            <span class="custom-select-arrow">▾</span>
+          </div>
+          <div class="custom-select-options" v-show="dd.sort">
+            <div class="custom-select-option" :class="{ selected: sortBy === 'judul' }" @click="pilihDD('sort', 'judul')">Judul</div>
+            <div class="custom-select-option" :class="{ selected: sortBy === 'qty' }"   @click="pilihDD('sort', 'qty')">Stok</div>
+            <div class="custom-select-option" :class="{ selected: sortBy === 'harga' }" @click="pilihDD('sort', 'harga')">Harga</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" style="display:flex;align-items:flex-end;gap:8px;">
+        <button class="btn btn-outline btn-sm" @click="sortAsc = !sortAsc">
+          {{ sortAsc ? '↑ Asc' : '↓ Desc' }}
+        </button>
+        <button class="btn btn-sm" style="background:var(--gray);color:#fff;" @click="resetFilter">
+          ↺ Reset
+        </button>
+        <button class="btn btn-secondary btn-sm" @click="bukaModalTambah">➕ Tambah</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:20px;flex-wrap:wrap;padding:12px 0 4px;">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;">
+        <input type="checkbox" v-model="filterMenipis" style="width:16px;height:16px;cursor:pointer;"/>
+        <span style="color:var(--warning);">🟡 Tampilkan Stok Menipis (qty &lt; safety)</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;">
+        <input type="checkbox" v-model="filterKosong" style="width:16px;height:16px;cursor:pointer;"/>
+        <span style="color:var(--danger);">🔴 Tampilkan Stok Kosong (qty = 0)</span>
+      </label>
+    </div>
+
+    <div class="alert alert-info" style="display:flex;margin-top:12px;margin-bottom:0;">
+      📊 Menampilkan <strong style="margin:0 4px;">{{ stokTerfilter.length }}</strong> dari
+      <strong style="margin:0 4px;">{{ stok.length }}</strong> bahan ajar
+      <span v-if="filterMenipis || filterKosong" style="margin-left:8px;color:var(--warning);">
+        ⚠️ Mode Re-order aktif
+      </span>
+    </div>
+  </div>
+
+  <!-- Tabel Stok -->
+  <div class="card">
+    <div class="card-title">📦 Daftar Stok Bahan Ajar</div>
+    <div v-if="stokTerfilter.length === 0" class="alert alert-warning">
+      😕 Tidak ada data sesuai filter.
+      <a href="#" @click.prevent="resetFilter" style="font-weight:700;color:var(--primary);">Reset filter</a>
+    </div>
+    <div v-else class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th style="cursor:pointer;" @click="aturSort('kode')">Kode {{ ikonSort('kode') }}</th>
+            <th style="cursor:pointer;" @click="aturSort('judul')">Judul {{ ikonSort('judul') }}</th>
+            <th>Kategori</th>
+            <th>UT Daerah</th>
+            <th>Lokasi Rak</th>
+            <th style="cursor:pointer;" @click="aturSort('harga')">Harga {{ ikonSort('harga') }}</th>
+            <th style="cursor:pointer;" @click="aturSort('qty')">Stok {{ ikonSort('qty') }}</th>
+            <th>Safety</th>
+            <th>Status</th>
+            <th>Catatan</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(item, idx) in stokTerfilter" :key="item.kode">
+            <td>{{ idx + 1 }}</td>
+            <td><code>{{ item.kode }}</code></td>
+            <td><strong>{{ item.judul }}</strong></td>
+            <td><span class="badge badge-info">{{ item.kategori }}</span></td>
+            <td>{{ item.upbjj }}</td>
+            <td>{{ item.lokasiRak }}</td>
+            <td>{{ formatRupiah(item.harga) }}</td>
+            <td>
+              <span :style="{
+                color: item.qty === 0 ? 'var(--danger)' : item.qty < item.safety ? 'var(--warning)' : 'var(--success)',
+                fontWeight: '700', fontSize: '15px'
+              }">{{ item.qty }}</span>
+            </td>
+            <td>{{ item.safety }}</td>
+            <td>
+              <span v-if="item.qty === 0"              class="status-kosong">🔴 Kosong</span>
+              <span v-else-if="item.qty < item.safety" class="status-menipis">🟡 Menipis</span>
+              <span v-else                             class="status-aman">🟢 Aman</span>
+            </td>
+            <td><span v-html="item.catatanHTML"></span></td>
+            <td>
+              <button class="btn btn-sm" style="background:var(--warning);color:#fff;" @click="bukaModalEdit(item)">
+                ✏️ Edit
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Watcher Log -->
+  <div class="card" v-show="watchLog.length > 0">
+    <div class="card-title">👁️ Vue Watcher Log</div>
+    <div v-for="(log, i) in watchLog" :key="i"
+         style="font-size:12px;padding:6px 10px;border-radius:4px;margin-bottom:4px;"
+         :style="{ background: i === 0 ? 'var(--accent)' : 'var(--light)' }">
+      {{ log }}
+    </div>
+  </div>
+
+</div><!-- /main-content -->
+
+<!-- MODAL TAMBAH -->
+<div class="modal-overlay" :class="{ active: showModalTambah }" @click.self="showModalTambah = false">
+  <div class="modal-box">
+    <button class="modal-close" @click="showModalTambah = false">✕</button>
+    <h2 class="modal-title">➕ Tambah Bahan Ajar Baru</h2>
+    <div v-if="suksesTambah" class="alert alert-success">✅ Bahan ajar berhasil ditambahkan!</div>
+    <div v-else>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Kode MK *</label>
+          <input type="text" class="form-control" v-model="formBaru.kode" placeholder="EKMA4500"/>
+          <small v-if="errorsTambah.kode" style="color:var(--danger);">{{ errorsTambah.kode }}</small>
+        </div>
+        <div class="form-group">
+          <label>Lokasi Rak *</label>
+          <input type="text" class="form-control" v-model="formBaru.lokasiRak" placeholder="R1-A5"/>
+          <small v-if="errorsTambah.lokasiRak" style="color:var(--danger);">{{ errorsTambah.lokasiRak }}</small>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Judul Bahan Ajar *</label>
+        <input type="text" class="form-control" v-model="formBaru.judul" placeholder="Judul lengkap"/>
+        <small v-if="errorsTambah.judul" style="color:var(--danger);">{{ errorsTambah.judul }}</small>
+      </div>
+      <div class="grid-2">
+        <!-- Custom Dropdown: Kategori (modal tambah) -->
+        <div class="form-group">
+          <label>Kategori *</label>
+          <div class="custom-select" :class="{ open: dd.tambahKategori, error: errorsTambah.kategori }">
+            <div class="custom-select-trigger" @click="toggleDD('tambahKategori')">
+              <span :class="{ placeholder: !formBaru.kategori }">{{ formBaru.kategori || '-- Pilih --' }}</span>
+              <span class="custom-select-arrow">▾</span>
+            </div>
+            <div class="custom-select-options" v-show="dd.tambahKategori">
+              <div class="custom-select-option" v-for="k in kategoriList" :key="k"
+                   :class="{ selected: formBaru.kategori === k }" @click="pilihDD('tambahKategori', k, 'formBaru.kategori')">{{ k }}</div>
+            </div>
+          </div>
+          <small v-if="errorsTambah.kategori" style="color:var(--danger);">{{ errorsTambah.kategori }}</small>
+        </div>
+        <!-- Custom Dropdown: UT Daerah (modal tambah) -->
+        <div class="form-group">
+          <label>UT Daerah *</label>
+          <div class="custom-select" :class="{ open: dd.tambahUpbjj, error: errorsTambah.upbjj }">
+            <div class="custom-select-trigger" @click="toggleDD('tambahUpbjj')">
+              <span :class="{ placeholder: !formBaru.upbjj }">{{ formBaru.upbjj || '-- Pilih --' }}</span>
+              <span class="custom-select-arrow">▾</span>
+            </div>
+            <div class="custom-select-options" v-show="dd.tambahUpbjj">
+              <div class="custom-select-option" v-for="u in upbjjList" :key="u"
+                   :class="{ selected: formBaru.upbjj === u }" @click="pilihDD('tambahUpbjj', u, 'formBaru.upbjj')">{{ u }}</div>
+            </div>
+          </div>
+          <small v-if="errorsTambah.upbjj" style="color:var(--danger);">{{ errorsTambah.upbjj }}</small>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Harga *</label>
+          <input type="number" class="form-control" v-model="formBaru.harga" placeholder="65000"/>
+          <small v-if="errorsTambah.harga" style="color:var(--danger);">{{ errorsTambah.harga }}</small>
+        </div>
+        <div class="form-group">
+          <label>Stok (Qty) *</label>
+          <input type="number" class="form-control" v-model="formBaru.qty" placeholder="0"/>
+          <small v-if="errorsTambah.qty" style="color:var(--danger);">{{ errorsTambah.qty }}</small>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Safety Stock *</label>
+        <input type="number" class="form-control" v-model="formBaru.safety" placeholder="10"/>
+        <small v-if="errorsTambah.safety" style="color:var(--danger);">{{ errorsTambah.safety }}</small>
+      </div>
+      <div class="form-group">
+        <label>Catatan (HTML diperbolehkan)</label>
+        <input type="text" class="form-control" v-model="formBaru.catatanHTML" placeholder="<em>Edisi baru</em>"/>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+        <button class="btn btn-outline" @click="showModalTambah = false">Batal</button>
+        <button class="btn btn-primary" @click="simpanBaru">💾 Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDIT -->
+<div class="modal-overlay" :class="{ active: showModalEdit }" @click.self="showModalEdit = false">
+  <div class="modal-box">
+    <button class="modal-close" @click="showModalEdit = false">✕</button>
+    <h2 class="modal-title">✏️ Edit Bahan Ajar</h2>
+    <div v-if="suksesEdit" class="alert alert-success">✅ Data berhasil diperbarui!</div>
+    <div v-else>
+      <div class="form-group">
+        <label>Kode MK (tidak dapat diubah)</label>
+        <input type="text" class="form-control" :value="formEdit.kode" disabled style="background:var(--light);font-weight:700;"/>
+      </div>
+      <div class="form-group">
+        <label>Judul *</label>
+        <input type="text" class="form-control" v-model="formEdit.judul"/>
+        <small v-if="errorsEdit.judul" style="color:var(--danger);">{{ errorsEdit.judul }}</small>
+      </div>
+      <div class="grid-2">
+        <!-- Custom Dropdown: Kategori (modal edit) -->
+        <div class="form-group">
+          <label>Kategori</label>
+          <div class="custom-select" :class="{ open: dd.editKategori }">
+            <div class="custom-select-trigger" @click="toggleDD('editKategori')">
+              <span :class="{ placeholder: !formEdit.kategori }">{{ formEdit.kategori || '-- Pilih --' }}</span>
+              <span class="custom-select-arrow">▾</span>
+            </div>
+            <div class="custom-select-options" v-show="dd.editKategori">
+              <div class="custom-select-option" v-for="k in kategoriList" :key="k"
+                   :class="{ selected: formEdit.kategori === k }" @click="pilihDD('editKategori', k, 'formEdit.kategori')">{{ k }}</div>
+            </div>
+          </div>
+        </div>
+        <!-- Custom Dropdown: UT Daerah (modal edit) -->
+        <div class="form-group">
+          <label>UT Daerah</label>
+          <div class="custom-select" :class="{ open: dd.editUpbjj }">
+            <div class="custom-select-trigger" @click="toggleDD('editUpbjj')">
+              <span :class="{ placeholder: !formEdit.upbjj }">{{ formEdit.upbjj || '-- Pilih --' }}</span>
+              <span class="custom-select-arrow">▾</span>
+            </div>
+            <div class="custom-select-options" v-show="dd.editUpbjj">
+              <div class="custom-select-option" v-for="u in upbjjList" :key="u"
+                   :class="{ selected: formEdit.upbjj === u }" @click="pilihDD('editUpbjj', u, 'formEdit.upbjj')">{{ u }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Lokasi Rak *</label>
+          <input type="text" class="form-control" v-model="formEdit.lokasiRak"/>
+          <small v-if="errorsEdit.lokasiRak" style="color:var(--danger);">{{ errorsEdit.lokasiRak }}</small>
+        </div>
+        <div class="form-group">
+          <label>Harga *</label>
+          <input type="number" class="form-control" v-model="formEdit.harga"/>
+          <small v-if="errorsEdit.harga" style="color:var(--danger);">{{ errorsEdit.harga }}</small>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Stok (Qty) *</label>
+          <input type="number" class="form-control" v-model="formEdit.qty"/>
+          <small v-if="errorsEdit.qty" style="color:var(--danger);">{{ errorsEdit.qty }}</small>
+        </div>
+        <div class="form-group">
+          <label>Safety Stock *</label>
+          <input type="number" class="form-control" v-model="formEdit.safety"/>
+          <small v-if="errorsEdit.safety" style="color:var(--danger);">{{ errorsEdit.safety }}</small>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Catatan (HTML)</label>
+        <input type="text" class="form-control" v-model="formEdit.catatanHTML"/>
+        <div style="font-size:12px;color:var(--gray);margin-top:4px;">
+          Preview: <span v-html="formEdit.catatanHTML"></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+        <button class="btn btn-outline" @click="showModalEdit = false">Batal</button>
+        <button class="btn btn-primary" @click="simpanEdit">💾 Simpan Perubahan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /stok-app -->
+
+<script src="js/data.js"></script>
+<script src="js/script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script src="js/stok-app.js"></script>
+</body>
+</html>
